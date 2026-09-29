@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+  <title>Тренировочный дневник Влада Цепеша</title>
+  <meta name="description" content="Автономный тренировочный дневник с расчётом КПШ. Работает без интернета!">
+  
+  <!-- Встроенные стили для офлайн-работы -->
+  <style>
+    /* Все стили из основного приложения */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-card: rgba(30, 41, 59, 0.6);
+      --border: rgba(148, 163, 184, 0.1);
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent: #6366f1;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --info: #06b6d4;
+      --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --gradient-warning: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      background-image: 
+        url('https://image.qwenlm.ai/generated-images/59452699-96d6-4a40-9846-5cb2f05ee55f/_result.png'),
+        url('https://image.qwenlm.ai/generated-images/f40798f4-d624-4e09-a702-4529f0eda293/_result.png'),
+        url('https://image.qwenlm.ai/generated-images/19c1a568-3de7-4f66-9286-3bbfa6ccd463/_result.png'),
+        radial-gradient(at 20% 30%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 80% 70%, rgba(168, 85, 247, 0.15) 0px, transparent 50%);
+      background-size: 400px auto, 400px auto, 400px auto, 100% 100%, 100% 100%;
+      background-position: left 5% top 10%, right 5% top 30%, left 50% bottom 5%, center, center;
+      background-repeat: no-repeat;
+      background-attachment: scroll;
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 0.75rem;
+      line-height: 1.6;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: inherit;
+      opacity: 0.15;
+      z-index: -1;
+      pointer-events: none;
+    }
+    
+    .container { max-width: 1400px; margin: 0 auto; overflow-x: hidden; }
+    
+    header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem 1rem;
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      overflow: hidden;
+    }
+    
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--gradient-primary);
+    }
+    
+    h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+    
+    @media (max-width: 640px) { h1 { font-size: 1.5rem; } }
+    
+    .week-kpsh { color: var(--text-secondary); font-size: 1rem; }
+    .week-kpsh span { color: #818cf8; font-weight: 700; font-size: 1.25rem; }
+    
+    .hint { color: var(--text-muted); font-size: 0.875rem; margin-top: 0.5rem; }
+    .hint code { color: var(--warning); background: rgba(245, 158, 11, 0.1); padding: 0.125rem 0.375rem; border-radius: 0.25rem; }
+    
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      max-width: 100%;
+    }
+    
+    @media (max-width: 640px) {
+      .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+      .controls button { padding: 0.625rem 0.5rem; font-size: 0.8125rem; }
+    }
+    
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: var(--shadow-sm);
+    }
+    
+    button:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    
+    .btn-stats { background: var(--gradient-primary); color: white; }
+    .btn-export { background: var(--gradient-success); color: white; }
+    .btn-import { background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%); color: white; }
+    .btn-reset { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; }
+    .btn-print { background: var(--bg-card); color: var(--text-primary); border: 1px solid var(--border); }
+    .btn-share { background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); color: white; }
+    
+    .filters {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    @media (max-width: 640px) {
+      .filters { grid-template-columns: 1fr; }
+      .filters select { width: 100%; }
+    }
+    
+    select {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      font-size: 0.875rem;
+      max-width: 100%;
+    }
+    
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+      padding: 0.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    
+    @media (max-width: 640px) {
+      .tabs { gap: 0.25rem; padding: 0.25rem; }
+      .tab { padding: 0.5rem 0.25rem; font-size: 0.8125rem; }
+    }
+    
+    .tab {
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      text-align: center;
+    }
+    
+    .tab.active { background: var(--gradient-primary); color: white; }
+    .tab:not(.active) { background: transparent; color: var(--text-secondary); }
+    .tab:not(.active):hover { background: rgba(99, 102, 241, 0.1); }
+    
+    .time-block {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 1.5rem;
+      padding: 1.25rem;
+      margin-bottom: 1.5rem;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    @media (max-width: 640px) { .time-block { padding: 0.75rem; } }
+    
+    .time-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+      gap: 0.5rem;
+    }
+    
+    .time-block-header h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--gradient-success);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    @media (max-width: 640px) { .time-block-header h3 { font-size: 1.125rem; } }
+    
+    .btn-add-block {
+      padding: 0.5rem 1rem;
+      background: var(--gradient-primary);
+      color: white;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    .training-block {
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      padding: 1rem;
+      margin-bottom: 0.75rem;
+    }
+    
+    .block-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    @media (max-width: 640px) {
+      .block-header select { flex: 1; padding: 0.5rem; font-size: 0.8125rem; }
+      .block-kpsh { font-size: 0.875rem; padding: 0.375rem 0.625rem; }
+    }
+    
+    .block-kpsh {
+      margin-left: auto;
+      color: var(--warning);
+      font-weight: 700;
+      padding: 0.5rem 1rem;
+      background: rgba(245, 158, 11, 0.1);
+      border-radius: 0.5rem;
+    }
+    
+    .btn-delete-block {
+      padding: 0.5rem 0.75rem;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      color: white;
+      border-radius: 0.5rem;
+    }
+    
+    .table-container { overflow-x: auto; border-radius: 0.75rem; }
+    
+    table { width: 100%; font-size: 0.875rem; border-collapse: separate; border-spacing: 0; }
+    th { padding: 0.75rem 0.5rem; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
+    td { padding: 0.5rem; border-bottom: 1px solid var(--border); }
+    
+    input[type="text"] {
+      width: 100%;
+      background: rgba(51, 65, 85, 0.5);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      padding: 0.625rem 0.75rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+    }
+    
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+    }
+    
+    input.set-input { min-width: 90px; text-align: center; font-family: monospace; }
+    input.set-input.warning { border-color: var(--danger); background: rgba(239, 68, 68, 0.1); }
+    input.set-input.bar-side { border-color: var(--info); background: rgba(6, 182, 212, 0.1); }
+    
+    .set-info { font-size: 0.6875rem; color: var(--info); text-align: center; margin-top: 0.25rem; font-weight: 600; }
+    
+    .btn-add-set {
+      padding: 0.5rem 0.75rem;
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border);
+      border-radius: 0.5rem;
+    }
+    
+    .kpsh-cell { text-align: center; font-weight: 700; }
+    .kpsh-value { color: var(--warning); font-size: 1rem; }
+    .kpsh-value.zero { color: var(--text-muted); }
+    
+    .btn-add-exercise {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: var(--gradient-success);
+      color: white;
+      border-radius: 0.75rem;
+    }
+    
+    footer {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.875rem;
+      margin-top: 3rem;
+      padding-bottom: 2rem;
+    }
+    
+    @media (max-width: 768px) {
+      .table-container { display: none; }
+      .mobile-cards { display: block; }
+      .exercise-card {
+        background: rgba(51, 65, 85, 0.5);
+        border: 1px solid var(--border);
+        border-radius: 1rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+      }
+      .sets-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+    }
+    
+    @media (min-width: 769px) { .mobile-cards { display: none; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>💪 Влад Цепеш</h1>
+      <p class="week-kpsh">КПШ за неделю: <span id="weekKpsh">0</span></p>
+      <p class="hint">💡 Формат <code>N*вес/повт</code> = N блинов по X кг с каждой стороны + гриф 10 кг</p>
+      <p class="hint" style="margin-top: 0.5rem; color: #10b981;">✅ Работает полностью офлайн! Данные сохраняются в браузере</p>
+    </header>
+
+    <div class="controls">
+      <button class="btn-stats" onclick="toggleStats()">📊 Статистика</button>
+      <button class="btn-export" onclick="exportData()">📤 Экспорт</button>
+      <button class="btn-import" onclick="document.getElementById('fileInput').click()">📥 Импорт</button>
+      <input type="file" id="fileInput" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn-reset" onclick="resetData()">🔄 Сброс</button>
+      <button class="btn-print" onclick="window.print()">🖨️ Печать</button>
+      <button class="btn-share" onclick="shareApp()">📤 Поделиться</button>
+    </div>
+
+    <div class="filters">
+      <select id="filterExercise" onchange="applyFilters()">
+        <option value="">Все упражнения</option>
+      </select>
+      <select id="filterType" onchange="applyFilters()">
+        <option value="">Все типы</option>
+        <option value="Тяжелая">Тяжелая</option>
+        <option value="Средняя">Средняя</option>
+        <option value="Легкая">Легкая</option>
+        <option value="Восстановление">Восстановление</option>
+        <option value="ОФП">ОФП</option>
+      </select>
+    </div>
+
+    <div id="statsPanel" style="display:none"></div>
+
+    <div class="tabs">
+      <div class="tab active" data-day="ПНД" onclick="switchDay('ПНД')">ПНД</div>
+      <div class="tab" data-day="ВТР" onclick="switchDay('ВТР')">ВТР</div>
+      <div class="tab" data-day="СРД" onclick="switchDay('СРД')">СРД</div>
+      <div class="tab" data-day="ЧТВ" onclick="switchDay('ЧТВ')">ЧТВ</div>
+      <div class="tab" data-day="ПТН" onclick="switchDay('ПТН')">ПТН</div>
+    </div>
+
+    <div id="content"></div>
+
+    <footer>
+      💾 Данные сохраняются автоматически в localStorage<br>
+      📱 Этот файл можно скопировать на любое устройство и он будет работать без интернета!
+    </footer>
+  </div>
+
+  <script>
+    // Константы
+    const BAR_WEIGHT = 10;
+    const STORAGE_KEY = 'vlad_tsepesh_training_diary';
+    const DAYS = ['ПНД', 'ВТР', 'СРД', 'ЧТВ', 'ПТН'];
+    const TIMES = ['Д', 'В'];
+    const TIME_LABELS = { 'Д': 'Д (12:00)', 'В': 'В (17:00)' };
+    const TRAINING_TYPES = ['Тяжелая', 'Средняя', 'Легкая', 'Восстановление', 'ОФП'];
+    const GOALS = ['Сила', 'Выносливость', 'Тонус', 'Восстановление', 'ОФП'];
+
+    let state = {
+      blocks: [],
+      activeDay: 'ПНД',
+      showStats: false,
+      filterExercise: '',
+      filterType: ''
+    };
+
+    let idCounter = 0;
+    function genId() {
+      return 'id_' + Date.now().toString(36) + '_' + (++idCounter).toString(36);
+    }
+
+    function parseSet(raw) {
+      const result = {
+        weight: 0, reps: 0, kpsh: 0, warning: null, raw,
+        isBarSide: false, sideWeight: 0, platesCount: 0
+      };
+
+      if (!raw || raw.trim() === '') return result;
+
+      let input = raw.trim();
+      input = input.replace(/^\?+\s*/, '');
+
+      const setPrefixMatch = input.match(/^(\d+)\*(.+)$/);
+      let isBarSide = false;
+      let platesCount = 1;
+      if (setPrefixMatch) {
+        isBarSide = true;
+        platesCount = parseInt(setPrefixMatch[1], 10);
+        input = setPrefixMatch[2];
+      }
+
+      input = input.replace(/\+\+/g, '');
+      input = input.replace(/,/g, '.');
+
+      const slashIndex = input.indexOf('/');
+      if (slashIndex === -1) {
+        result.warning = `Не распознан формат: "${raw}"`;
+        return result;
+      }
+
+      const weightPart = input.substring(0, slashIndex).trim();
+      const repsPart = input.substring(slashIndex + 1).trim();
+
+      const baseWeight = parseNumberOrRange(weightPart);
+      if (baseWeight === null) {
+        result.warning = `Не число в весе: "${weightPart}"`;
+        return result;
+      }
+
+      let realWeight;
+      if (isBarSide) {
+        realWeight = 2 * platesCount * baseWeight + BAR_WEIGHT;
+        result.isBarSide = true;
+        result.sideWeight = Math.round(baseWeight * 10) / 10;
+        result.platesCount = platesCount;
+      } else {
+        realWeight = baseWeight;
+      }
+      result.weight = Math.round(realWeight * 10) / 10;
+
+      const reps = parseNumberOrRange(repsPart);
+      if (reps === null) {
+        result.warning = `Не число в повторах: "${repsPart}"`;
+        return result;
+      }
+      result.reps = reps;
+
+      result.kpsh = Math.round(realWeight * reps * 10) / 10;
+      return result;
+    }
+
+    function parseNumberOrRange(str) {
+      str = str.trim();
+      if (!str) return null;
+
+      const dashMatch = str.match(/^(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)$/);
+      if (dashMatch) {
+        const a = parseFloat(dashMatch[1]);
+        const b = parseFloat(dashMatch[2]);
+        return (a + b) / 2;
+      }
+
+      if (!/^\d+(?:\.\d+)?$/.test(str)) return null;
+
+      const num = parseFloat(str);
+      if (isNaN(num)) return null;
+      return num;
+    }
+
+    function calculateKpshForSets(sets) {
+      let total = 0;
+      for (const s of sets) {
+        const parsed = parseSet(s);
+        total += parsed.kpsh;
+      }
+      return Math.round(total * 10) / 10;
+    }
+
+    function hasWarnings(sets) {
+      const warnings = [];
+      for (const s of sets) {
+        const parsed = parseSet(s);
+        if (parsed.warning) warnings.push(parsed.warning);
+      }
+      return warnings;
+    }
+
+    function loadData() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch (e) {
+        console.error('Ошибка загрузки:', e);
+      }
+      return createInitialData();
+    }
+
+    function saveData() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state.blocks));
+      } catch (e) {
+        console.error('Ошибка сохранения:', e);
+      }
+    }
+
+    function createInitialData() {
+      return [
+        {
+          id: genId(), day: 'ПНД', time: 'Д', type: 'Средняя', goal: 'Восстановление',
+          exercises: [
+            { id: genId(), name: 'Жим лежа', sets: ['1*8,8/8-10', '2*8,8/6-8', '3*8,8/4-6', '4*8,8/2-4', '5*8,8/1-2', '6*8,8++/1-2'], note: 'Толстый гриф с блинами Вики' },
+            { id: genId(), name: 'Подн. Шт. на бицепс', sets: ['30/10', '', '30/10', '', '30/10', ''], note: '' }
+          ]
+        }
+      ];
+    }
+
+    function render() {
+      renderStats();
+      renderContent();
+      updateWeekKpsh();
+      updateExerciseFilter();
+    }
+
+    function updateWeekKpsh() {
+      const weekKpsh = DAYS.reduce((sum, day) => sum + getDayKpsh(day), 0);
+      document.getElementById('weekKpsh').textContent = weekKpsh.toFixed(1);
+    }
+
+    function getDayKpsh(day) {
+      return state.blocks
+        .filter(b => b.day === day)
+        .reduce((sum, b) => sum + b.exercises.reduce((s, e) => s + calculateKpshForSets(e.sets), 0), 0);
+    }
+
+    function getExerciseTotalKpsh(exerciseName) {
+      return state.blocks.reduce((sum, b) =>
+        sum + b.exercises
+          .filter(e => e.name === exerciseName)
+          .reduce((s, e) => s + calculateKpshForSets(e.sets), 0), 0);
+    }
+
+    function getAllExercises() {
+      return Array.from(new Set(
+        state.blocks.flatMap(b => b.exercises.map(e => e.name))
+      )).sort();
+    }
+
+    function updateExerciseFilter() {
+      const select = document.getElementById('filterExercise');
+      const currentValue = select.value;
+      const exercises = getAllExercises();
+      select.innerHTML = '<option value="">Все упражнения</option>' +
+        exercises.map(ex => `<option value="${ex}">${ex}</option>`).join('');
+      select.value = currentValue;
+    }
+
+    function renderStats() {
+      const panel = document.getElementById('statsPanel');
+      if (!state.showStats) {
+        panel.style.display = 'none';
+        return;
+      }
+
+      const maxDayKpsh = Math.max(...DAYS.map(d => getDayKpsh(d)), 1);
+      const exercises = getAllExercises();
+
+      panel.innerHTML = `
+        <div style="background: var(--bg-card); border: 1px solid var(--border); border-radius: 1.5rem; padding: 1.25rem; margin-bottom: 1.5rem;">
+          <h2 style="font-size: 1.5rem; background: var(--gradient-warning); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 1rem;">📊 КПШ по дням недели</h2>
+          ${DAYS.map(day => {
+            const kpsh = getDayKpsh(day);
+            const pct = (kpsh / maxDayKpsh) * 100;
+            return `
+              <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem;">
+                <span style="width: 3rem; font-weight: 700;">${day}</span>
+                <div style="flex: 1; background: rgba(51, 65, 85, 0.5); border-radius: 9999px; height: 2rem; overflow: hidden;">
+                  <div style="height: 100%; background: var(--gradient-warning); border-radius: 9999px; display: flex; align-items: center; justify-content: flex-end; padding-right: 0.75rem; width: ${Math.max(pct, 2)}%;">
+                    <span style="font-size: 0.875rem; font-weight: 700; color: white;">${kpsh.toFixed(1)}</span>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+          <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+            <h3 style="color: var(--text-secondary); margin-bottom: 0.75rem;">КПШ по упражнениям (за всё время):</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 0.5rem;">
+              ${exercises.map(ex => `
+                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0.75rem; background: rgba(51, 65, 85, 0.3); border-radius: 0.5rem;">
+                  <span style="color: var(--text-secondary);">${ex}</span>
+                  <span style="color: #818cf8; font-weight: 700;">${getExerciseTotalKpsh(ex).toFixed(1)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+      panel.style.display = 'block';
+    }
+
+    function renderContent() {
+      const content = document.getElementById('content');
+      const dayBlocks = state.blocks.filter(b => b.day === state.activeDay);
+      const filteredBlocks = dayBlocks.filter(b => {
+        if (state.filterType && b.type !== state.filterType) return false;
+        if (filterExercise && !b.exercises.some(e => e.name === state.filterExercise)) return false;
+        return true;
+      });
+
+      let html = '';
+      TIMES.forEach(time => {
+        const timeBlocks = filteredBlocks.filter(b => b.time === time);
+        html += `
+          <div class="time-block">
+            <div class="time-block-header">
+              <h3>⏰ ${TIME_LABELS[time]}</h3>
+              <button class="btn-add-block" onclick="addBlock('${state.activeDay}', '${time}')">+ Добавить блок</button>
+            </div>
+            ${timeBlocks.length === 0 ? '<p style="color:var(--text-muted);text-align:center;padding:2rem">Нет тренировок</p>' : ''}
+            ${timeBlocks.map(block => renderTrainingBlock(block)).join('')}
+          </div>
+        `;
+      });
+
+      content.innerHTML = html;
+    }
+
+    function renderTrainingBlock(block) {
+      const blockKpsh = block.exercises.reduce((s, e) => s + calculateKpshForSets(e.sets), 0);
+      const maxSets = Math.max(...block.exercises.map(e => e.sets.length), 6);
+
+      return `
+        <div class="training-block">
+          <div class="block-header">
+            <select onchange="updateBlock('${block.id}', 'type', this.value)">
+              <option value="">Тип тренировки</option>
+              ${TRAINING_TYPES.map(t => `<option value="${t}" ${block.type === t ? 'selected' : ''}>${t}</option>`).join('')}
+            </select>
+            <select onchange="updateBlock('${block.id}', 'goal', this.value)">
+              <option value="">Что тренируем</option>
+              ${GOALS.map(g => `<option value="${g}" ${block.goal === g ? 'selected' : ''}>${g}</option>`).join('')}
+            </select>
+            <span class="block-kpsh">💪 ${blockKpsh.toFixed(1)}</span>
+            <button class="btn-delete-block" onclick="deleteBlock('${block.id}')">✕</button>
+          </div>
+          ${block.exercises.length > 0 ? `
+            <div class="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Упражнение</th>
+                    ${Array.from({length: maxSets}, (_, i) => `<th>П${i + 1}</th>`).join('')}
+                    <th>+</th>
+                    <th>Примечание</th>
+                    <th>КПШ</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${block.exercises.map(exercise => renderExerciseRow(exercise, block.id, maxSets)).join('')}
+                </tbody>
+              </table>
+            </div>
+          ` : ''}
+          <button class="btn-add-exercise" onclick="addExercise('${block.id}')">+ Добавить упражнение</button>
+        </div>
+      `;
+    }
+
+    function renderExerciseRow(exercise, blockId, maxSets) {
+      const kpsh = calculateKpshForSets(exercise.sets);
+      const warnings = hasWarnings(exercise.sets);
+
+      return `
+        <tr>
+          <td><input type="text" value="${exercise.name}" onchange="updateExercise('${blockId}', '${exercise.id}', 'name', this.value)" placeholder="Упражнение"></td>
+          ${Array.from({length: maxSets}, (_, i) => {
+            const set = exercise.sets[i] || '';
+            const parsed = parseSet(set);
+            const className = parsed.warning ? 'set-input warning' : (parsed.isBarSide ? 'set-input bar-side' : 'set-input');
+            const info = parsed.isBarSide && !parsed.warning ? `<div class="set-info">${parsed.platesCount}×${parsed.sideWeight}→${parsed.weight}кг</div>` : '';
+            return `
+              <td>
+                <input type="text" class="${className}" value="${set}" onchange="updateSet('${blockId}', '${exercise.id}', ${i}, this.value)" placeholder="вес/повт">
+                ${info}
+              </td>
+            `;
+          }).join('')}
+          <td><button class="btn-add-set" onclick="addSet('${blockId}', '${exercise.id}')">+</button></td>
+          <td><input type="text" value="${exercise.note}" onchange="updateExercise('${blockId}', '${exercise.id}', 'note', this.value)" placeholder="Примечание"></td>
+          <td class="kpsh-cell"><span class="${kpsh > 0 ? 'kpsh-value' : 'kpsh-value zero'}">${kpsh.toFixed(1)}</span></td>
+          <td><button style="background:transparent;color:var(--danger);border:none;cursor:pointer;" onclick="deleteExercise('${blockId}', '${exercise.id}')">🗑️</button></td>
+        </tr>
+      `;
+    }
+
+    function switchDay(day) {
+      state.activeDay = day;
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.day === day);
+      });
+      render();
+    }
+
+    function toggleStats() {
+      state.showStats = !state.showStats;
+      render();
+    }
+
+    function applyFilters() {
+      state.filterExercise = document.getElementById('filterExercise').value;
+      state.filterType = document.getElementById('filterType').value;
+      render();
+    }
+
+    function updateBlock(blockId, field, value) {
+      const block = state.blocks.find(b => b.id === blockId);
+      if (block) {
+        block[field] = value;
+        saveData();
+        render();
+      }
+    }
+
+    function updateExercise(blockId, exerciseId, field, value) {
+      const block = state.blocks.find(b => b.id === blockId);
+      if (block) {
+        const exercise = block.exercises.find(e => e.id === exerciseId);
+        if (exercise) {
+          exercise[field] = value;
+          saveData();
+          render();
+        }
+      }
+    }
+
+    function updateSet(blockId, exerciseId, setIndex, value) {
+      const block = state.blocks.find(b => b.id === blockId);
+      if (block) {
+        const exercise = block.exercises.find(e => e.id === exerciseId);
+        if (exercise) {
+          exercise.sets[setIndex] = value;
+          saveData();
+          render();
+        }
+      }
+    }
+
+    function addBlock(day, time) {
+      state.blocks.push({ id: genId(), day, time, type: '', goal: '', exercises: [] });
+      saveData();
+      render();
+    }
+
+    function deleteBlock(blockId) {
+      if (confirm('Удалить этот блок?')) {
+        state.blocks = state.blocks.filter(b => b.id !== blockId);
+        saveData();
+        render();
+      }
+    }
+
+    function addExercise(blockId) {
+      const block = state.blocks.find(b => b.id === blockId);
+      if (block) {
+        block.exercises.push({ id: genId(), name: '', sets: ['', '', '', '', '', ''], note: '' });
+        saveData();
+        render();
+      }
+    }
+
+    function deleteExercise(blockId, exerciseId) {
+      const block = state.blocks.find(b => b.id === blockId);
+      if (block) {
+        block.exercises = block.exercises.filter(e => e.id !== exerciseId);
+        saveData();
+        render();
+      }
+    }
+
+    function addSet(blockId, exerciseId) {
+      const block = state.blocks.find(b => b.id === blockId);
+      if (block) {
+        const exercise = block.exercises.find(e => e.id === exerciseId);
+        if (exercise) {
+          exercise.sets.push('');
+          saveData();
+          render();
+        }
+      }
+    }
+
+    function exportData() {
+      const json = JSON.stringify(state.blocks, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'training_diary_export.json';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (Array.isArray(data)) {
+            state.blocks = data;
+            saveData();
+            render();
+            alert('Данные импортированы!');
+          }
+        } catch {
+          alert('Ошибка чтения файла');
+        }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+
+    function resetData() {
+      if (confirm('Сбросить все данные?')) {
+        state.blocks = createInitialData();
+        saveData();
+        render();
+      }
+    }
+
+    function shareApp() {
+      const url = window.location.href;
+      if (navigator.share) {
+        navigator.share({
+          title: 'Тренировочный дневник Влада Цепеша',
+          text: '💪 Автономный тренировочный дневник с расчётом КПШ',
+          url: url
+        });
+      } else if (navigator.clipboard) {
+        navigator.clipboard.writeText(url).then(() => {
+          alert('✅ Ссылка скопирована!\n\n' + url);
+        });
+      } else {
+        prompt('Скопируйте ссылку:', url);
+      }
+    }
+
+    // Инициализация
+    state.blocks = loadData();
+    render();
+
+    const datalist = document.createElement('datalist');
+    datalist.id = 'exercise-names';
+    document.body.appendChild(datalist);
+  </script>
+</body>
+</html>
